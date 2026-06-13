@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { buildTypeOrmOptions } from './infra/config/typeorm.config';
 import { HealthModule } from './infra/modules/health.module';
+import { UsersModule } from './infra/modules/users.module';
+import { AuthModule } from './infra/modules/auth.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { HealthModule } from './infra/modules/health.module';
       useFactory: buildTypeOrmOptions,
     }),
     HealthModule,
+    UsersModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
