@@ -8,7 +8,7 @@ they don't.
 Built with NestJS, TypeScript, and PostgreSQL via TypeORM. It runs end-to-end
 with `docker compose up`, and JWT auth protects ordering and product writes.
 
-**Live API:** https://inventory.gencvh.com
+**Live API:** https://inventory.gencvh.com/api
 
 > This repo is the backend only. The frontend is a separate repo that consumes
 > this API. They deploy independently, each with its own history and pipeline.
