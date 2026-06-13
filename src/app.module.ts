@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { buildTypeOrmOptions } from './infra/config/typeorm.config';
 import { HealthModule } from './infra/modules/health.module';
+import { ProductsModule } from './infra/modules/products.module';
 import { UsersModule } from './infra/modules/users.module';
 import { AuthModule } from './infra/modules/auth.module';
 
@@ -14,6 +15,7 @@ import { AuthModule } from './infra/modules/auth.module';
       useFactory: buildTypeOrmOptions,
     }),
     HealthModule,
+    ProductsModule,
     UsersModule,
     AuthModule,
   ],
