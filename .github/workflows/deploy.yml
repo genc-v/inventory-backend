@@ -1,0 +1,56 @@
+name: Backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint:check
+      - run: npm test
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build the image locally on the runner, tagged with the commit SHA so
+      # every deploy has a unique, traceable image — no external registry.
+      - name: Build image
+        run: docker build -t inventory-app/backend:${{ github.sha }} .
+
+      # Import it straight into k3s's containerd image store.
+      - name: Import image into k3s
+        run: docker save inventory-app/backend:${{ github.sha }} | sudo k3s ctr images import -
+
+      # Sync secret values from GitHub Actions secrets into the cluster.
+      # DB_HOST is the server's LAN IP (the Postgres docker container runs on
+      # the host, outside k8s).
+      - name: Sync secret
+        run: |
+          kubectl create secret generic backend-secret \
+            -n inventory-app \
+            --from-literal=DB_HOST="${{ secrets.DB_HOST }}" \
+            --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      # Stamp the SHA tag into the manifest, then apply. One declarative change
+      # sets the new image (triggering the rollout) and any config edits at once.
+      - name: Deploy
+        run: |
+          sed -i "s|image: inventory-app/backend:.*|image: inventory-app/backend:${{ github.sha }}|" k8s/deployment.yaml
+          kubectl apply -f k8s/
+          kubectl rollout status deployment/backend -n inventory-app
